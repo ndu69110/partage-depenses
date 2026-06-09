@@ -1,610 +1,317 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>🎁 Participation Cadeau</title>
-
-    <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-
-        .container {
-            max-width: 900px;
-        }
-
-        .participant-card {
-            transition: all 0.2s ease;
-        }
-
-        .participant-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .progress {
-            height: 28px;
-        }
-
-        .progress-bar {
-            font-weight: bold;
-        }
-
-        .summary-value {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .money-green {
-            color: #198754;
-        }
-
-        .money-red {
-            color: #dc3545;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suivi de participation au cadeau</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body { background:#f8f9fa; }
+.progress { height:28px; }
+</style>
 </head>
-
 <body>
-
 <div class="container py-4">
 
-    <h1 class="text-center mb-4">
-        🎁 Répartition du coût d'un cadeau
-    </h1>
+<h1 class="text-center mb-4">🎁 Suivi de participation au cadeau</h1>
 
-    <!-- Configuration -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
+<div class="card mb-3">
+<div class="card-body">
 
-            <div class="mb-3">
-                <label class="form-label">
-                    Nombre de participants
-                </label>
+<div class="mb-3">
+<label class="form-label">Nom de l'acheteur</label>
+<input id="buyerName" class="form-control" value="Nicolas">
+</div>
 
-                <input
-                    type="number"
-                    id="nbParticipants"
-                    class="form-control"
-                    min="1">
-            </div>
+<div class="mb-3">
+<label class="form-label">Nombre total de participants (acheteur inclus)</label>
+<input id="nbParticipants" type="number" min="2" class="form-control">
+</div>
 
-            <button
-                class="btn btn-primary"
-                onclick="genererParticipants()">
-                Créer les participants
-            </button>
+<button class="btn btn-primary" onclick="generateParticipants()">
+Générer les participants
+</button>
 
-            <div
-                id="zoneParticipants"
-                class="mt-4">
-            </div>
+<div id="participantsInputs" class="mt-3"></div>
 
-        </div>
-    </div>
+</div>
+</div>
 
-    <!-- Prix -->
-    <div
-        class="card shadow-sm mb-4"
-        id="zoneMontant"
-        style="display:none;">
+<div class="card mb-3" id="giftCard" style="display:none">
+<div class="card-body">
 
-        <div class="card-body">
+<label class="form-label">Prix du cadeau (€)</label>
+<input id="giftPrice" type="number" step="0.01" class="form-control">
 
-            <label class="form-label">
-                Prix total du cadeau (€)
-            </label>
+<button class="btn btn-success mt-3" onclick="buildTracker()">
+Calculer
+</button>
 
-            <input
-                type="number"
-                id="prixTotal"
-                class="form-control"
-                step="0.01"
-                min="0">
+</div>
+</div>
 
-            <button
-                class="btn btn-success mt-3"
-                onclick="calculer()">
-                Calculer les participations
-            </button>
+<div id="results" style="display:none">
+<div class="card">
+<div class="card-body">
 
-        </div>
+<h3>Remboursements</h3>
 
-    </div>
+<div class="progress mb-2">
+<div id="bar" class="progress-bar" style="width:0%">0%</div>
+</div>
 
-    <!-- Résultats -->
-    <div
-        class="card shadow-sm"
-        id="resultats"
-        style="display:none;">
+<div>
+<strong><span id="pct">0</span>% remboursé</strong>
+</div>
 
-        <div class="card-body">
+<div class="my-3">
+<button class="btn btn-success btn-sm" onclick="checkAll()">Tout cocher</button>
+<button class="btn btn-warning btn-sm" onclick="uncheckAll()">Tout décocher</button>
+</div>
 
-            <h2 class="mb-4">
-                Suivi des paiements
-            </h2>
+<div id="list"></div>
 
-            <!-- Progression -->
-            <div class="mb-4">
+<hr>
 
-                <label class="form-label fw-bold">
-                    Progression de la collecte
-                </label>
+<div class="row text-center">
+<div class="col-md-3">
+<b>Part individuelle</b>
+<div id="share">0 €</div>
+</div>
 
-                <div class="progress">
+<div class="col-md-3">
+<b>Montant remboursé</b>
+<div id="reimb">0 €</div>
+</div>
 
-                    <div
-                        id="progressBar"
-                        class="progress-bar"
-                        role="progressbar"
-                        style="width:0%">
-                        0%
-                    </div>
+<div class="col-md-3">
+<b>Reste à rembourser</b>
+<div id="remain">0 €</div>
+</div>
 
-                </div>
+<div class="col-md-3">
+<b>Nombre de remboursements</b>
+<div id="count">0</div>
+</div>
+</div>
 
-                <div class="mt-2">
+</div>
+</div>
+</div>
 
-                    <strong>
-                        <span id="pourcentageCollecte">
-                            0
-                        </span>
-                        % collecté
-                    </strong>
-
-                </div>
-
-            </div>
-
-            <!-- Boutons -->
-            <div class="mb-4">
-
-                <button
-                    class="btn btn-success me-2"
-                    onclick="toutCocher()">
-                    ✅ Tout cocher
-                </button>
-
-                <button
-                    class="btn btn-warning"
-                    onclick="toutDecocher()">
-                    ↩️ Tout décocher
-                </button>
-
-            </div>
-
-            <!-- Participants -->
-            <div id="listeParticipants"></div>
-
-            <hr>
-
-            <!-- Résumé -->
-            <div class="row text-center">
-
-                <div class="col-md-4 mb-3">
-                    <div>Part individuelle</div>
-                    <div
-                        id="partIndividuelle"
-                        class="summary-value">
-                        0.00 €
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <div>Total payé</div>
-                    <div
-                        id="totalPaye"
-                        class="summary-value money-green">
-                        0.00 €
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <div>Reste à payer</div>
-                    <div
-                        id="resteAPayer"
-                        class="summary-value money-red">
-                        0.00 €
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Réinitialisation -->
-    <div class="text-center mt-4">
-
-        <button
-            class="btn btn-danger"
-            onclick="reinitialiser()">
-            🗑️ Réinitialiser toutes les données
-        </button>
-
-    </div>
+<div class="text-center mt-4">
+<button class="btn btn-danger" onclick="resetAll()">
+🗑 Réinitialiser toutes les données
+</button>
+</div>
 
 </div>
 
 <script>
+let state = {
+    buyerName: "Nicolas",
+    participants: [],
+    giftPrice: 0,
+    share: 0
+};
 
-let participants = [];
-let prixTotalGlobal = 0;
-let partIndividuelle = 0;
+function save() {
+    localStorage.setItem("giftTrackerFR", JSON.stringify(state));
+}
 
-window.addEventListener("load", chargerDonnees);
+function load() {
+    const s = localStorage.getItem("giftTrackerFR");
+    if (!s) return;
 
-function sauvegarderDonnees() {
+    state = JSON.parse(s);
 
-    const data = {
-        participants,
-        prixTotalGlobal,
-        partIndividuelle
+    document.getElementById("buyerName").value = state.buyerName || "Nicolas";
+
+    if (state.participants.length) {
+        document.getElementById("giftCard").style.display = "block";
+        document.getElementById("results").style.display = "block";
+        document.getElementById("giftPrice").value = state.giftPrice;
+        render();
+    }
+}
+
+window.onload = load;
+
+function generateParticipants() {
+    const n = parseInt(document.getElementById("nbParticipants").value || 0);
+
+    if (n < 2) {
+        alert("Minimum 2 participants");
+        return;
+    }
+
+    let h = "<h5>Participants (hors acheteur)</h5>";
+
+    for (let i = 1; i < n; i++) {
+        h += `<input class="form-control mb-2" id="p${i}" placeholder="Participant ${i}">`;
+    }
+
+    document.getElementById("participantsInputs").innerHTML = h;
+    document.getElementById("giftCard").style.display = "block";
+}
+
+function buildTracker() {
+
+    const buyer = document.getElementById("buyerName").value.trim() || "Nicolas";
+    const n = parseInt(document.getElementById("nbParticipants").value || 0);
+    const price = parseFloat(document.getElementById("giftPrice").value || 0);
+
+    if (n < 2 || price <= 0) {
+        alert("Veuillez saisir des valeurs valides");
+        return;
+    }
+
+    state = {
+        buyerName: buyer,
+        giftPrice: price,
+        share: price / n,
+        participants: []
     };
 
-    localStorage.setItem(
-        "cadeauData",
-        JSON.stringify(data)
-    );
-}
-
-function chargerDonnees() {
-
-    const data =
-        localStorage.getItem("cadeauData");
-
-    if (!data) {
-        return;
-    }
-
-    try {
-
-        const sauvegarde =
-            JSON.parse(data);
-
-        participants =
-            sauvegarde.participants || [];
-
-        prixTotalGlobal =
-            sauvegarde.prixTotalGlobal || 0;
-
-        partIndividuelle =
-            sauvegarde.partIndividuelle || 0;
-
-        if (participants.length === 0) {
-            return;
-        }
-
-        document.getElementById(
-            "nbParticipants"
-        ).value = participants.length;
-
-        document.getElementById(
-            "prixTotal"
-        ).value = prixTotalGlobal;
-
-        document.getElementById(
-            "zoneMontant"
-        ).style.display = "block";
-
-        document.getElementById(
-            "resultats"
-        ).style.display = "block";
-
-        document.getElementById(
-            "partIndividuelle"
-        ).textContent =
-            partIndividuelle.toFixed(2) + " €";
-
-        afficherParticipants();
-
-    } catch (e) {
-
-        console.error(
-            "Erreur de chargement",
-            e
-        );
-
-    }
-}
-
-function genererParticipants() {
-
-    const nb =
-        parseInt(
-            document.getElementById(
-                "nbParticipants"
-            ).value
-        );
-
-    if (!nb || nb < 1) {
-
-        alert(
-            "Veuillez saisir un nombre valide."
-        );
-
-        return;
-    }
-
-    let html =
-        "<h5 class='mb-3'>Noms des participants</h5>";
-
-    for (let i = 0; i < nb; i++) {
-
-        const nomExistant =
-            participants[i]
-                ? participants[i].nom
-                : "";
-
-        html += `
-            <input
-                type="text"
-                class="form-control mb-2"
-                id="participant${i}"
-                placeholder="Participant ${i + 1}"
-                value="${nomExistant}">
-        `;
-    }
-
-    document.getElementById(
-        "zoneParticipants"
-    ).innerHTML = html;
-
-    document.getElementById(
-        "zoneMontant"
-    ).style.display = "block";
-}
-
-function calculer() {
-
-    const nb =
-        parseInt(
-            document.getElementById(
-                "nbParticipants"
-            ).value
-        );
-
-    const prixTotal =
-        parseFloat(
-            document.getElementById(
-                "prixTotal"
-            ).value
-        );
-
-    if (!prixTotal || prixTotal <= 0) {
-
-        alert(
-            "Veuillez saisir un montant valide."
-        );
-
-        return;
-    }
-
-    const anciensPaiements = {};
-
-    participants.forEach(p => {
-        anciensPaiements[p.nom] = p.paye;
+    state.participants.push({
+        name: buyer,
+        buyer: true,
+        reimbursed: true
     });
 
-    participants = [];
+    for (let i = 1; i < n; i++) {
+        let name = document.getElementById(`p${i}`)?.value.trim();
+        if (!name) name = `Participant ${i}`;
 
-    for (let i = 0; i < nb; i++) {
-
-        let nom =
-            document.getElementById(
-                `participant${i}`
-            ).value.trim();
-
-        if (!nom) {
-            nom = `Participant ${i + 1}`;
-        }
-
-        participants.push({
-            nom,
-            paye:
-                anciensPaiements[nom] || false
+        state.participants.push({
+            name: name,
+            buyer: false,
+            reimbursed: false
         });
     }
 
-    prixTotalGlobal = prixTotal;
-    partIndividuelle = prixTotal / nb;
-
-    document.getElementById(
-        "partIndividuelle"
-    ).textContent =
-        partIndividuelle.toFixed(2) + " €";
-
-    document.getElementById(
-        "resultats"
-    ).style.display = "block";
-
-    afficherParticipants();
-    sauvegarderDonnees();
+    save();
+    document.getElementById("results").style.display = "block";
+    render();
 }
 
-function afficherParticipants() {
+function render() {
 
-    const liste =
-        document.getElementById(
-            "listeParticipants"
-        );
+    document.getElementById("share").textContent =
+        state.share.toFixed(2) + " €";
 
     let html = "";
 
-    participants.forEach(
-        (participant, index) => {
+    state.participants.forEach((p, i) => {
 
-        html += `
-        <div class="card participant-card mb-2">
+        if (p.buyer) {
 
-            <div class="card-body">
+            html += `
+            <div class="card mb-2 border-success">
+                <div class="card-body">
+                    👑 <strong>${p.name}</strong>
+                    <span class="badge bg-success">Acheteur</span>
+                </div>
+            </div>`;
 
-                <div class="row align-items-center">
+        } else {
 
-                    <div class="col-md-8">
+            html += `
+            <div class="card mb-2">
+                <div class="card-body d-flex justify-content-between align-items-center">
 
-                        <h5 class="mb-2">
-                            ${participant.nom}
-                        </h5>
-
-                        ${
-                            participant.paye
-                            ? `
-                                <span class="badge bg-success">
-                                    ✔ Payé
-                                </span>
-                              `
-                            : `
-                                <span class="badge bg-danger">
-                                    Reste :
-                                    ${partIndividuelle.toFixed(2)} €
-                                </span>
-                              `
-                        }
-
+                    <div>
+                        <strong>${p.name}</strong><br>
+                        ${p.reimbursed
+                            ? '<span class="badge bg-success">Remboursé</span>'
+                            : `<span class="badge bg-danger">Doit ${state.share.toFixed(2)} €</span>`}
                     </div>
 
-                    <div
-                        class="col-md-4 text-md-end mt-3 mt-md-0">
-
-                        <div
-                            class="form-check form-switch d-inline-block">
-
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                ${
-                                    participant.paye
-                                    ? "checked"
-                                    : ""
-                                }
-                                onchange="mettreAJourPaiement(${index})">
-
-                        </div>
-
-                    </div>
+                    <input type="checkbox"
+                           class="form-check-input"
+                           ${p.reimbursed ? "checked" : ""}
+                           onchange="toggle(${i})">
 
                 </div>
-
-            </div>
-
-        </div>
-        `;
+            </div>`;
+        }
     });
 
-    liste.innerHTML = html;
-
-    mettreAJourTotaux();
+    document.getElementById("list").innerHTML = html;
+    updateStats();
 }
 
-function mettreAJourPaiement(index) {
-
-    participants[index].paye =
-        !participants[index].paye;
-
-    sauvegarderDonnees();
-
-    afficherParticipants();
+function toggle(i) {
+    state.participants[i].reimbursed = !state.participants[i].reimbursed;
+    save();
+    render();
 }
 
-function toutCocher() {
+function checkAll() {
+    state.participants.forEach(p => {
+        if (!p.buyer) p.reimbursed = true;
+    });
+    save();
+    render();
+}
 
-    participants.forEach(
-        p => p.paye = true
+function uncheckAll() {
+    state.participants.forEach(p => {
+        if (!p.buyer) p.reimbursed = false;
+    });
+    save();
+    render();
+}
+
+function updateStats() {
+
+    const reimbCount = state.participants.filter(
+        p => !p.buyer && p.reimbursed
+    ).length;
+
+    const totalPeople = state.participants.length - 1;
+
+    const reimbursedAmount = reimbCount * state.share;
+
+    const targetAmount = totalPeople * state.share;
+
+    const remainingAmount = Math.max(
+        0,
+        targetAmount - reimbursedAmount
     );
 
-    sauvegarderDonnees();
-    afficherParticipants();
-}
-
-function toutDecocher() {
-
-    participants.forEach(
-        p => p.paye = false
-    );
-
-    sauvegarderDonnees();
-    afficherParticipants();
-}
-
-function mettreAJourTotaux() {
-
-    const nbPayes =
-        participants.filter(
-            p => p.paye
-        ).length;
-
-    const totalPaye =
-        nbPayes * partIndividuelle;
-
-    const reste =
-        Math.max(
-            0,
-            prixTotalGlobal - totalPaye
-        );
-
-    document.getElementById(
-        "totalPaye"
-    ).textContent =
-        totalPaye.toFixed(2) + " €";
-
-    document.getElementById(
-        "resteAPayer"
-    ).textContent =
-        reste.toFixed(2) + " €";
-
-    const pourcentage =
-        prixTotalGlobal > 0
-        ? (totalPaye / prixTotalGlobal) * 100
+    const percent = targetAmount
+        ? (reimbursedAmount / targetAmount) * 100
         : 0;
 
-    document.getElementById(
-        "pourcentageCollecte"
-    ).textContent =
-        pourcentage.toFixed(0);
+    document.getElementById("reimb").textContent =
+        reimbursedAmount.toFixed(2) + " €";
 
-    const progressBar =
-        document.getElementById(
-            "progressBar"
-        );
+    document.getElementById("remain").textContent =
+        remainingAmount.toFixed(2) + " €";
 
-    progressBar.style.width =
-        pourcentage + "%";
+    document.getElementById("count").textContent =
+        reimbCount + " / " + totalPeople;
 
-    progressBar.textContent =
-        pourcentage.toFixed(0) + "%";
+    document.getElementById("pct").textContent =
+        percent.toFixed(0);
 
-    progressBar.className =
-        pourcentage >= 100
-        ? "progress-bar bg-success"
-        : "progress-bar";
+    document.getElementById("bar").style.width =
+        percent + "%";
 
-    sauvegarderDonnees();
+    document.getElementById("bar").textContent =
+        percent.toFixed(0) + "%";
 }
 
-function reinitialiser() {
-
-    if (
-        !confirm(
-            "Supprimer toutes les données enregistrées ?"
-        )
-    ) {
+function resetAll() {
+    if (!confirm("Supprimer toutes les données enregistrées ?")) {
         return;
     }
 
-    localStorage.removeItem(
-        "cadeauData"
-    );
-
+    localStorage.removeItem("giftTrackerFR");
     location.reload();
 }
-
 </script>
 
 </body>
 </html>
-
